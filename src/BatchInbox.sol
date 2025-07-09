@@ -1,17 +1,33 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-contract BatchInbox {
-    StorageContract public immutable esStorageContract;
+import "@openzeppelin-upgradeable/access/Ownable2StepUpgradeable.sol";
+
+contract BatchInbox is Ownable2StepUpgradeable {
+    StorageContract public esStorageContract;
     mapping(address => uint256) public balances;
 
     error BalanceNotEnough();
 
-    constructor(address _esStorageContract) {
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _owner) external initializer {
+        __Context_init();
+        __Ownable_init(_owner);
+    }
+
+    function setEsStorageContract(address _esStorageContract) external onlyOwner {
         esStorageContract = StorageContract(_esStorageContract);
     }
 
     function store() internal {
+        // Skip storage operations if esStorageContract is not set
+        if (address(esStorageContract) == address(0)) {
+            return;
+        }
+
         uint256 i = 0;
         uint256 payment = 0;
         bytes32 h;
@@ -47,10 +63,10 @@ contract BatchInbox {
         _deposit(_to, msg.value);
     }
 
-    function _deposit(address _to_to, uint256 _amount) internal {
+    function _deposit(address _to, uint256 _amount) internal {
         if (_amount == 0) return;
 
-        balances[_to_to] += _amount;
+        balances[_to] += _amount;
     }
 
     function withdraw(address _to, uint256 _amount) external {
