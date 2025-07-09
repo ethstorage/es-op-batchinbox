@@ -1,10 +1,13 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import {Script} from "forge-std/Script.sol";
-import {BatchInbox} from "../src/BatchInbox.sol";
-import {TransparentUpgradeableProxy} from "@openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
-import {console} from "forge-std/console.sol";
+import "@openzeppelin/proxy/transparent/TransparentUpgradeableProxy.sol";
+import "@openzeppelin/proxy/transparent/ProxyAdmin.sol";
+
+import "forge-std/Script.sol";
+import "forge-std/console.sol";
+
+import "../src/BatchInbox.sol";
 
 contract Deploy is Script {
     function setUp() public {}
@@ -29,5 +32,23 @@ contract Deploy is Script {
         console.log("BatchInbox Implementation Address:", address(implementation));
         console.log("BatchInbox Proxy Address:", address(proxy));
         console.log("BatchInbox Owner Address:", ownerAddress);
+    }
+
+    function upgrade(address proxyAddress, address proxyAdminAddress) public {
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        vm.startBroadcast(deployerPrivateKey);
+
+        // Deploy a new implementation
+        BatchInbox newImplementation = new BatchInbox();
+
+        // Get the ProxyAdmin instance
+        ProxyAdmin admin = ProxyAdmin(proxyAdminAddress);
+
+        // Upgrade the proxy to use the new implementation
+        admin.upgradeAndCall(ITransparentUpgradeableProxy(proxyAddress), address(newImplementation), "0x");
+
+        vm.stopBroadcast();
+
+        console.log("Upgraded proxy at %s to new implementation at %s", proxyAddress, address(newImplementation));
     }
 }
