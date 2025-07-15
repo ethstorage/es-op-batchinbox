@@ -5,6 +5,7 @@ import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
 
 import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades/Options.sol";
 import {BatchInbox} from "../src/BatchInbox.sol";
 
 contract Deploy is Script {
@@ -32,7 +33,10 @@ contract Deploy is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        Upgrades.upgradeProxy(proxyAddress, "BatchInbox.sol:BatchInbox", "");
+        // refer to https://docs.openzeppelin.com/upgrades-plugins/foundry-upgrades#upgrade_a_proxy_or_beacon for more details
+        Options memory opts;
+        opts.referenceContract = "BatchInbox.sol:BatchInbox";
+        Upgrades.upgradeProxy(proxyAddress, "BatchInboxV2.sol:BatchInboxV2", "", opts);
 
         vm.stopBroadcast();
 

@@ -13,7 +13,7 @@ if [ "$1" = "deploy" ]; then
 elif [ "$1" = "upgrade" ]; then
     # Upgrade existing proxy
     forge script script/Deploy.s.sol:Deploy \
-        --sig "upgrade(address,address)" $PROXY_ADDR \
+        --sig "upgrade(address)" $PROXY_ADDR \
         --rpc-url $RPC_URL \
         --broadcast \
         --verify \
