@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import "@openzeppelin-upgradeable/access/Ownable2StepUpgradeable.sol";
+import {Ownable2StepUpgradeable} from "@openzeppelin/contracts-upgradeable/access/Ownable2StepUpgradeable.sol";
 
 contract BatchInbox is Ownable2StepUpgradeable {
     StorageContract public esStorageContract;
@@ -9,6 +9,7 @@ contract BatchInbox is Ownable2StepUpgradeable {
 
     error BalanceNotEnough();
 
+    /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
