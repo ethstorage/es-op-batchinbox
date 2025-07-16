@@ -36,10 +36,20 @@ contract Deploy is Script {
         // refer to https://docs.openzeppelin.com/upgrades-plugins/foundry-upgrades#upgrade_a_proxy_or_beacon for more details
         Options memory opts;
         opts.referenceContract = "BatchInbox.sol:BatchInbox";
-        Upgrades.upgradeProxy(proxyAddress, "BatchInboxV2.sol:BatchInboxV2", "", opts);
+
+        // Upgrades.upgradeProxy(proxyAddress, "BatchInboxV2.sol:BatchInboxV2", "", opts);
+
+        // prepareUpgrade does not upgrade the proxy, it only prepares the new implementation address
+        // and returns the address of the new implementation.
+        // You need to call the upgradeTo function on the proxy manually after this.
+        // This is useful for multisig wallets or other scenarios where you want to prepare the upgrade
+        // and then execute it later.
+        // See https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/946#issuecomment-1861378609
+        address newImpl = Upgrades.prepareUpgrade("BatchInboxV2.sol:BatchInboxV2", opts);
 
         vm.stopBroadcast();
 
-        console.log("Upgraded proxy at %s to new implementation", proxyAddress);
+        //console.log("Upgraded proxy at %s to new implementation", proxyAddress);
+        console.log("New implementation address: %s, need to upgrade %s manually", newImpl, proxyAddress);
     }
 }
