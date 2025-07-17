@@ -1,17 +1,55 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.24;
 
-import {Script, console2} from "forge-std/Script.sol";
-import "../src/BatchInbox.sol";
+import {Script} from "forge-std/Script.sol";
+import {console} from "forge-std/console.sol";
+
+import {Upgrades} from "openzeppelin-foundry-upgrades/Upgrades.sol";
+import {Options} from "openzeppelin-foundry-upgrades/Options.sol";
+import {BatchInbox} from "../src/BatchInbox.sol";
 
 contract Deploy is Script {
     function setUp() public {}
 
     function run() public {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address ownerAddress = vm.envAddress("OWNER_ADDRESS");
         vm.startBroadcast(deployerPrivateKey);
 
-        new BatchInbox(0x804C520d3c084C805E37A35E90057Ac32831F96f);
+        address proxy = Upgrades.deployTransparentProxy(
+            "BatchInbox.sol:BatchInbox",
+            ownerAddress,
+            abi.encodeWithSelector(BatchInbox.initialize.selector, ownerAddress)
+        );
+
         vm.stopBroadcast();
+
+        // Log the addresses
+        console.log("BatchInbox Proxy Address:", address(proxy));
+        console.log("BatchInbox Owner Address:", ownerAddress);
+    }
+
+    function upgrade(address proxyAddress) public {
+        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        vm.startBroadcast(deployerPrivateKey);
+
+        // refer to https://docs.openzeppelin.com/upgrades-plugins/foundry-upgrades#upgrade_a_proxy_or_beacon for more details
+        Options memory opts;
+        opts.referenceContract = "BatchInbox.sol:BatchInbox";
+
+        // Upgrades.upgradeProxy(proxyAddress, "BatchInboxV2.sol:BatchInboxV2", "", opts);
+
+        // prepareUpgrade does not upgrade the proxy, it only prepares the new implementation address
+        // and returns the address of the new implementation.
+        // You need to call the upgradeTo function on the proxy manually after this.
+        // This is useful for multisig wallets or other scenarios where you want to prepare the upgrade
+        // and then execute it later.
+        // See https://github.com/OpenZeppelin/openzeppelin-upgrades/issues/946#issuecomment-1861378609
+        address newImpl = Upgrades.prepareUpgrade("BatchInboxV2.sol:BatchInboxV2", opts);
+
+        vm.stopBroadcast();
+
+        //console.log("Upgraded proxy at %s to new implementation", proxyAddress);
+        console.log("New implementation address: %s, need to upgrade %s manually", newImpl, proxyAddress);
     }
 }
